@@ -3552,6 +3552,7 @@ function safe_format_cell(cell, v) {
 
 function format_cell(cell, v, o) {
 	if(cell == null || cell.t == null || cell.t == 'z') return "";
+	if(cell.t == 'n') return cell.v;
 	if(cell.w !== undefined) return cell.w;
 	if(cell.t == 'd' && !cell.z && o && o.dateNF) cell.z = o.dateNF;
 	if(v == undefined) return safe_format_cell(cell, cell.v);
@@ -13002,7 +13003,7 @@ function write_ws_xml_cell(cell, ref, ws, opts) {
 	var oldt = cell.t, oldv = cell.v;
 	switch(cell.t) {
 		case 'b': vv = cell.v ? "1" : "0"; break;
-		case 'n': vv = ''+cell.v; break;
+		case 'n': vv = ''+(cell.v.toString().indexOf('.') == -1 && cell.v.toString().length > 15)? cell.w : cell.v; break;
 		case 'e': vv = BErr[cell.v]; break;
 		case 'd':
 			if(opts.cellDates) vv = parseDate(cell.v, -1).toISOString();
@@ -13020,11 +13021,13 @@ function write_ws_xml_cell(cell, ref, ws, opts) {
 	var os = get_cell_style(opts.cellXfs, cell, opts);
 	if(os !== 0) o.s = os;
 	switch(cell.t) {
-		case 'n': break;
+		//case 'n': break;
 		case 'd': o.t = "d"; break;
 		case 'b': o.t = "b"; break;
 		case 'e': o.t = "e"; break;
-		default: if(cell.v == null) { delete cell.t; break; }
+		default: 
+			if (cell.t === 'n' && cell.v.toString().indexOf('.') == -1 && cell.v.toString().length < 15) { break; } 
+			if(cell.v == null) { delete cell.t; break; }
 			if(opts.bookSST) {
 				v = writetag('v', ''+get_sst_id(opts.Strings, cell.v, opts.revStrings));
 				o.t = "s"; break;
